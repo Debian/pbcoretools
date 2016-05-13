@@ -18,7 +18,7 @@ from pbcore.io import (SubreadSet, HdfSubreadSet, FastaReader, FastaWriter,
                        ExternalResources, openDataSet)
 from pbcommand.engine import run_cmd
 from pbcommand.cli import registry_builder, registry_runner, QuickOpt
-from pbcommand.models import FileTypes, SymbolTypes
+from pbcommand.models import FileTypes, SymbolTypes, OutputFileType
 
 log = logging.getLogger(__name__)
 
@@ -295,17 +295,25 @@ run_bam_to_fasta = functools.partial(run_bam_to_fastx, "bam2fasta",
 run_bam_to_fastq = functools.partial(run_bam_to_fastx, "bam2fastq",
     FastqReader, FastqWriter)
 
+subreads_from_h5_file_type = OutputFileType(FileTypes.DS_SUBREADS.file_type_id,
+                                            "SubreadSet", "SubreadSet",
+                                            "Imported SubreadSet", "subreads")
+subreads_barcoded_file_type = OutputFileType(FileTypes.DS_SUBREADS.file_type_id,
+                                             "SubreadSet",
+                                             "Barcoded SubreadSet",
+                                             "Barcoded SubreadSet",
+                                             "subreads_barcoded")
 
 @registry("h5_subreads_to_subread", "0.1.0",
           FileTypes.DS_SUBREADS_H5,
-          FileTypes.DS_SUBREADS, is_distributed=True, nproc=1)
+          subreads_from_h5_file_type, is_distributed=True, nproc=1)
 def run_bax2bam(rtc):
     return run_bax_to_bam(rtc.task.input_files[0], rtc.task.output_files[0])
 
 
 @registry("bam2bam_barcode", "0.1.0",
           (FileTypes.DS_SUBREADS, FileTypes.DS_BARCODE),
-          FileTypes.DS_SUBREADS,
+          subreads_barcoded_file_type,
           is_distributed=True,
           nproc=SymbolTypes.MAX_NPROC,
           options={"score_mode":"symmetric"})
@@ -318,12 +326,26 @@ def run_bam2bam(rtc):
         score_mode=rtc.task.options["pbcoretools.task_options.score_mode"])
 
 
+fasta_file_type = OutputFileType(FileTypes.FASTA.file_type_id, "FASTQ file", "FASTQ file",
+                                 "Reads in FASTA format", "reads")
+fastq_file_type = OutputFileType(FileTypes.FASTQ.file_type_id, "FASTQ file", "FASTQ file",
+                                 "Reads in FASTQ format", "reads")
+fasta_gzip_file_type = OutputFileType(FileTypes.GZIP.file_type_id, "GZIPed FASTA file(s)",
+                                      "GZIPed FASTA file(s)",
+                                      "Reads in compressed FASTA format",
+                                      "reads.fasta") # yuck - could be .tar !
+fastq_gzip_file_type = OutputFileType(FileTypes.GZIP.file_type_id, "GZIPed FASTQ file(s)",
+                                      "GZIPed FASTQ file(s)",
+                                      "Reads in compressed FASTQ format",
+                                      "reads.fastq")
+
+
 min_subread_length_opt = QuickOpt(0, "Minimum subread length",
     "Minimum length of subreads to write to FASTA/FASTQ")
 
 @registry("bam2fastq", "0.1.0",
           FileTypes.DS_SUBREADS,
-          FileTypes.FASTQ, is_distributed=True, nproc=1,
+          fastq_file_type, is_distributed=True, nproc=1,
           options={"min_subread_length":min_subread_length_opt})
 def run_bam2fastq(rtc):
     return run_bam_to_fastq(rtc.task.input_files[0], rtc.task.output_files[0],
@@ -332,7 +354,7 @@ def run_bam2fastq(rtc):
 
 @registry("bam2fasta", "0.1.0",
           FileTypes.DS_SUBREADS,
-          FileTypes.FASTA, is_distributed=True, nproc=1,
+          fasta_file_type, is_distributed=True, nproc=1,
           options={"min_subread_length":min_subread_length_opt})
 def run_bam2fasta(rtc):
     return run_bam_to_fasta(rtc.task.input_files[0], rtc.task.output_files[0],
@@ -341,14 +363,14 @@ def run_bam2fasta(rtc):
 
 @registry("bam2fasta_nofilter", "0.1.0",
           FileTypes.DS_SUBREADS,
-          FileTypes.FASTA, is_distributed=True, nproc=1)
+          fasta_file_type, is_distributed=True, nproc=1)
 def run_bam2fasta_nofilter(rtc):
     return run_bam_to_fasta(rtc.task.input_files[0], rtc.task.output_files[0])
 
 
 @registry("bam2fasta_archive", "0.1.0",
           FileTypes.DS_SUBREADS,
-          FileTypes.GZIP, is_distributed=True, nproc=1,
+          fasta_gzip_file_type, is_distributed=True, nproc=1,
           options={"min_subread_length":min_subread_length_opt})
 def run_bam2fasta_archive(rtc):
     return run_bam_to_fasta(rtc.task.input_files[0], rtc.task.output_files[0],
@@ -357,7 +379,7 @@ def run_bam2fasta_archive(rtc):
 
 @registry("bam2fastq_archive", "0.1.0",
           FileTypes.DS_SUBREADS,
-          FileTypes.GZIP, is_distributed=True, nproc=1,
+          fastq_gzip_file_type, is_distributed=True, nproc=1,
           options={"min_subread_length":min_subread_length_opt})
 def run_bam2fasta_archive(rtc):
     return run_bam_to_fastq(rtc.task.input_files[0], rtc.task.output_files[0],
@@ -381,7 +403,7 @@ def run_fasta2referenceset(rtc):
 
 @registry("bam2fastq_ccs", "0.1.0",
           FileTypes.DS_CCS,
-          FileTypes.GZIP, is_distributed=True, nproc=1)
+          fastq_gzip_file_type, is_distributed=True, nproc=1)
 def run_bam2fastq_ccs(rtc):
     """
     Duplicate of run_bam2fastq, but with ConsensusReadSet as input.
@@ -391,7 +413,7 @@ def run_bam2fastq_ccs(rtc):
 
 @registry("bam2fasta_ccs", "0.1.0",
           FileTypes.DS_CCS,
-          FileTypes.GZIP, is_distributed=True, nproc=1)
+          fasta_gzip_file_type, is_distributed=True, nproc=1)
 def run_bam2fasta_ccs(rtc):
     """
     Duplicate of run_bam2fasta, but with ConsensusReadSet as input.
