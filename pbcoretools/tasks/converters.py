@@ -326,7 +326,7 @@ def run_bam2bam(rtc):
         score_mode=rtc.task.options["pbcoretools.task_options.score_mode"])
 
 
-fasta_file_type = OutputFileType(FileTypes.FASTA.file_type_id, "FASTQ file", "FASTQ file",
+fasta_file_type = OutputFileType(FileTypes.FASTA.file_type_id, "FASTA file", "FASTA file",
                                  "Reads in FASTA format", "reads")
 fastq_file_type = OutputFileType(FileTypes.FASTQ.file_type_id, "FASTQ file", "FASTQ file",
                                  "Reads in FASTQ format", "reads")
@@ -381,7 +381,7 @@ def run_bam2fasta_archive(rtc):
           FileTypes.DS_SUBREADS,
           fastq_gzip_file_type, is_distributed=True, nproc=1,
           options={"min_subread_length":min_subread_length_opt})
-def run_bam2fasta_archive(rtc):
+def run_bam2fastq_archive(rtc):
     return run_bam_to_fastq(rtc.task.input_files[0], rtc.task.output_files[0],
         rtc.task.options["pbcoretools.task_options.min_subread_length"])
 
