@@ -23,7 +23,7 @@ def get_contract_parser():
 
     p = get_scatter_pbparser(TOOL_ID, "0.1.3", "ConsensusReadSet scatter",
                              "Scatter ConsensusRead DataSet", driver,
-                             Constants.CHUNK_KEYS, is_distributed=False)
+                             Constants.CHUNK_KEYS, is_distributed=True)
 
     p.add_input_file_type(FileTypes.DS_CCS,
                           "ccsset",

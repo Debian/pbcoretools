@@ -24,7 +24,7 @@ def get_contract_parser():
     chunk_keys = ("$chunk.contigset_id", )
     p = get_scatter_pbparser(TOOL_ID, "0.1.3", "Scatter ContigSet",
                              "Scatter ContigSet", driver, chunk_keys,
-                             is_distributed=False)
+                             is_distributed=True)
 
     p.add_input_file_type(FileTypes.DS_CONTIG, "dataset_in", "ContigSet In",
                           "PacBio ContigSet")
