@@ -386,16 +386,23 @@ def run_bam2fastq_archive(rtc):
         rtc.task.options["pbcoretools.task_options.min_subread_length"])
 
 
+fofn_file_type = OutputFileType(FileTypes.FOFN.file_type_id, "FOFN file",
+                                "FOFN file", "List of input files", "files")
+
 @registry("fasta2fofn", "0.1.0",
           FileTypes.FASTA,
-          FileTypes.FOFN, is_distributed=False, nproc=1)
+          fofn_file_type, is_distributed=False, nproc=1)
 def run_fasta2fofn(rtc):
     return run_fasta_to_fofn(rtc.task.input_files[0], rtc.task.output_files[0])
 
 
+ref_file_type = OutputFileType(FileTypes.DS_REF.file_type_id, "ReferenceSet",
+                               "ReferenceSet XML",
+                               "PacBio Reference DataSet XML", "reference")
+
 @registry("fasta2referenceset", "0.1.0",
           FileTypes.FASTA,
-          FileTypes.DS_REF, is_distributed=True, nproc=1)
+          ref_file_type, is_distributed=True, nproc=1)
 def run_fasta2referenceset(rtc):
     return run_fasta_to_referenceset(rtc.task.input_files[0],
                                      rtc.task.output_files[0])
